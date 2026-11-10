@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
 import '../screens/dashboard_screen.dart';
-import '../screens/builder_screen.dart';
+import '../screens/archive_builder_screen.dart';
 import '../screens/benchmark_screen.dart';
 import '../screens/inspector_screen.dart';
 import '../screens/history_screen.dart';
@@ -18,9 +18,10 @@ class ZippeddonApp extends StatelessWidget {
       title: 'ZIPPEDDON',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark(),
+      initialRoute: '/',
       routes: {
         '/': (_) => const DashboardScreen(),
-        '/builder': (_) => const BuilderScreen(),
+        '/builder': (_) => const ArchiveBuilderScreen(),
         '/benchmark': (_) => const BenchmarkScreen(),
         '/inspector': (_) => const InspectorScreen(),
         '/history': (_) => const HistoryScreen(),
