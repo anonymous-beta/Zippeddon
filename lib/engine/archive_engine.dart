@@ -1,7 +1,6 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
@@ -27,20 +26,15 @@ class ArchiveEngine {
     }
 
     final stopwatch = Stopwatch()..start();
-
     final archive = Archive();
-
     final safeName = _safeFilename(config.filename);
 
-    final perEntry =
-        config.sampleBytes ~/ config.entryCount;
+    final perEntry = config.sampleBytes ~/ config.entryCount;
+    final remainder = config.sampleBytes % config.entryCount;
 
-    final remainder =
-        config.sampleBytes % config.entryCount;
+    var originalBytes = 0;
 
-    int originalBytes = 0;
-
-    for (int i = 0; i < config.entryCount; i++) {
+    for (var i = 0; i < config.entryCount; i++) {
       final length = perEntry + (i < remainder ? 1 : 0);
 
       if (length <= 0) continue;
@@ -60,7 +54,7 @@ class ArchiveEngine {
 
     final encoded = ZipEncoder().encode(archive);
 
-    if (encoded == null || encoded.isEmpty) {
+    if (encoded.isEmpty) {
       throw StateError('ZIP encoding returned empty data.');
     }
 
@@ -68,14 +62,9 @@ class ArchiveEngine {
       throw StateError('Archive output limit exceeded.');
     }
 
-    final output = File(
-      '${outputDirectory.path}/$safeName',
-    );
+    final output = File('${outputDirectory.path}/$safeName');
 
-    await output.writeAsBytes(
-      encoded,
-      flush: true,
-    );
+    await output.writeAsBytes(encoded, flush: true);
 
     final digest = sha256.convert(encoded);
 
@@ -93,17 +82,14 @@ class ArchiveEngine {
     );
   }
 
-  Uint8List _createBenchmarkData(
-    int length,
-    int seed,
-  ) {
+  Uint8List _createBenchmarkData(int length, int seed) {
     final output = Uint8List(length);
 
     final pattern = utf8.encode(
       'ZIPPEDDON-ANONYMOUS-BETA-BENCHMARK-$seed-',
     );
 
-    for (int i = 0; i < length; i++) {
+    for (var i = 0; i < length; i++) {
       output[i] = pattern[i % pattern.length];
     }
 
