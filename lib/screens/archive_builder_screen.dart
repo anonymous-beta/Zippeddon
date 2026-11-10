@@ -7,6 +7,7 @@ import '../app/app_theme.dart';
 import '../core/formatters.dart';
 import '../engine/archive_engine.dart';
 import '../models/archive_config.dart';
+import '../models/archive_result.dart';
 import '../models/history_entry.dart';
 import '../services/history_service.dart';
 import '../services/share_service.dart';
@@ -20,8 +21,7 @@ class ArchiveBuilderScreen extends StatefulWidget {
       _ArchiveBuilderScreenState();
 }
 
-class _ArchiveBuilderScreenState
-    extends State<ArchiveBuilderScreen> {
+class _ArchiveBuilderScreenState extends State<ArchiveBuilderScreen> {
   final ArchiveEngine _engine = ArchiveEngine();
   final StorageService _storage = StorageService();
   final HistoryService _history = HistoryService();
@@ -131,12 +131,10 @@ class _ArchiveBuilderScreenState
             ),
           ),
           const SizedBox(height: 24),
-
           Text(
             'Archive entries: $_entries',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-
           Slider(
             value: _entries.toDouble(),
             min: 1,
@@ -148,18 +146,14 @@ class _ArchiveBuilderScreenState
                     setState(() => _entries = value.round());
                   },
           ),
-
           const SizedBox(height: 18),
-
           const Text(
             'Uncompressed test dataset',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-
           const SizedBox(height: 10),
-
           DropdownButtonFormField<int>(
-            value: _totalBytes,
+            initialValue: _totalBytes,
             decoration: const InputDecoration(
               labelText: 'Dataset size',
             ),
@@ -193,14 +187,11 @@ class _ArchiveBuilderScreenState
                     }
                   },
           ),
-
           const SizedBox(height: 18),
-
           const Text(
             'Compression level',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-
           Slider(
             value: _compressionLevel.toDouble(),
             min: 0,
@@ -215,7 +206,6 @@ class _ArchiveBuilderScreenState
                     });
                   },
           ),
-
           Card(
             child: Padding(
               padding: const EdgeInsets.all(18),
@@ -230,44 +220,32 @@ class _ArchiveBuilderScreenState
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _metric(
-                    'Dataset',
-                    Formatters.bytes(_safeTotalBytes),
-                  ),
+                  _metric('Dataset', Formatters.bytes(_safeTotalBytes)),
                   _metric('Entries', '$_entries'),
-                  _metric(
-                    'Compression level',
-                    '$_compressionLevel / 9',
-                  ),
+                  _metric('Compression level', '$_compressionLevel / 9'),
                   _metric('Nesting', 'Disabled'),
                 ],
               ),
             ),
           ),
-
           const SizedBox(height: 20),
-
           FilledButton.icon(
             onPressed: _busy ? null : _buildArchive,
             icon: _busy
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.folder_zip),
             label: Text(
               _busy ? 'BUILDING ARCHIVE...' : 'BUILD ZIP ARCHIVE',
             ),
           ),
-
           if (_message != null) ...[
             const SizedBox(height: 16),
             Text(_message!),
           ],
-
           if (result != null) ...[
             const SizedBox(height: 20),
             Card(
@@ -297,10 +275,7 @@ class _ArchiveBuilderScreenState
                       'Compression ratio',
                       Formatters.ratio(result.compressionRatio),
                     ),
-                    _metric(
-                      'Time',
-                      '${result.elapsed.inMilliseconds} ms',
-                    ),
+                    _metric('Time', '${result.elapsed.inMilliseconds} ms'),
                     _metric('SHA-256', result.checksum),
                   ],
                 ),
