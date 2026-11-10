@@ -1,6 +1,6 @@
 
 name: zippeddon
-description: ZIPPEDDON Archive Research and Compression Lab by Anonymous_beta.
+description: ZIPPEDDON - Archive Research and Compression Lab by Anonymous_beta.
 publish_to: "none"
 
 version: 1.0.0+1
@@ -12,29 +12,52 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # ZIP archive creation and inspection
   archive: ^4.0.7
+
+  # File integrity and hashing
   crypto: ^3.0.6
+
+  # File selection
   file_picker: ^8.1.7
+
+  # File paths
   path: ^1.9.1
+
+  # Application storage
   path_provider: ^2.1.5
+
+  # Native file sharing
   share_plus: ^10.1.4
+
+  # Godzilla roar and interface audio
+  audioplayers: ^6.5.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^5.0.0
+
+  # Android and iOS launcher icons
   flutter_launcher_icons: ^0.14.4
+
+  # Native splash screens
   flutter_native_splash: ^2.4.6
 
 flutter:
   uses-material-design: true
 
   assets:
+    - assets/audio/
     - assets/branding/
     - assets/icons/
     - assets/splash/
     - assets/backgrounds/
+
+# --------------------------------------------------
+# LAUNCHER ICON CONFIGURATION
+# --------------------------------------------------
 
 flutter_launcher_icons:
   android: true
@@ -47,9 +70,17 @@ flutter_launcher_icons:
 
   remove_alpha_ios: true
 
+# --------------------------------------------------
+# NATIVE SPLASH SCREEN CONFIGURATION
+# --------------------------------------------------
+
 flutter_native_splash:
   color: "#0C131B"
+
   image: assets/splash/splash_logo.png
+
+  android: true
+  ios: true
 
   android_12:
     color: "#0C131B"
