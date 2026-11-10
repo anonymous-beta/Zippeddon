@@ -9,8 +9,7 @@ class BenchmarkScreen extends StatefulWidget {
   const BenchmarkScreen({super.key});
 
   @override
-  State<BenchmarkScreen> createState() =>
-      _BenchmarkScreenState();
+  State<BenchmarkScreen> createState() => _BenchmarkScreenState();
 }
 
 class _BenchmarkScreenState extends State<BenchmarkScreen> {
@@ -70,9 +69,8 @@ class _BenchmarkScreenState extends State<BenchmarkScreen> {
             ),
           ),
           const SizedBox(height: 20),
-
           DropdownButtonFormField<int>(
-            value: _size,
+            initialValue: _size,
             decoration: const InputDecoration(
               labelText: 'Dataset size',
             ),
@@ -102,25 +100,18 @@ class _BenchmarkScreenState extends State<BenchmarkScreen> {
                     }
                   },
           ),
-
           const SizedBox(height: 18),
-
           FilledButton.icon(
             onPressed: _running ? null : _run,
             icon: _running
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.play_arrow),
-            label: Text(
-              _running ? 'RUNNING...' : 'RUN BENCHMARK',
-            ),
+            label: Text(_running ? 'RUNNING...' : 'RUN BENCHMARK'),
           ),
-
           if (_error != null) ...[
             const SizedBox(height: 16),
             Text(
@@ -128,14 +119,9 @@ class _BenchmarkScreenState extends State<BenchmarkScreen> {
               style: const TextStyle(color: Colors.redAccent),
             ),
           ],
-
           if (result != null) ...[
             const SizedBox(height: 24),
-
-            _metric(
-              'Original data',
-              Formatters.bytes(result.originalSize),
-            ),
+            _metric('Original data', Formatters.bytes(result.originalSize)),
             _metric(
               'Compressed archive',
               Formatters.bytes(result.compressedSize),
