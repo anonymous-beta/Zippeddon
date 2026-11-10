@@ -39,12 +39,18 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate Android platform files
+      - name: Generate Android and iOS platform scaffolding
         run: |
           flutter create \
-            --platforms=android \
+            --platforms=android,ios \
             --org com.anonymousbeta \
             .
+
+      - name: Verify generated platform directories
+        run: |
+          test -d android/app
+          test -d ios/Runner
+          test -d ios/Runner/Assets.xcassets/AppIcon.appiconset
 
       - name: Install dependencies
         run: flutter pub get
@@ -55,14 +61,19 @@ jobs:
       - name: Generate splash screens
         run: dart run flutter_native_splash:create
 
-      - name: Analyze
+      - name: Analyze Flutter project
         run: flutter analyze
 
-      - name: Test
+      - name: Run tests
         run: flutter test
 
       - name: Build release APK
         run: flutter build apk --release
+
+      - name: Verify APK
+        run: |
+          test -f build/app/outputs/flutter-apk/app-release.apk
+          ls -lh build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -72,7 +83,7 @@ jobs:
           if-no-files-found: error
 
   ios:
-    name: iOS Build
+    name: iOS App
     runs-on: macos-latest
 
     steps:
@@ -98,12 +109,16 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate iOS platform files
+      - name: Generate iOS platform scaffolding
         run: |
           flutter create \
             --platforms=ios \
             --org com.anonymousbeta \
             .
+
+      - name: Verify iOS icon directory
+        run: |
+          test -d ios/Runner/Assets.xcassets/AppIcon.appiconset
 
       - name: Install dependencies
         run: flutter pub get
@@ -114,10 +129,10 @@ jobs:
       - name: Generate splash screens
         run: dart run flutter_native_splash:create
 
-      - name: Analyze
+      - name: Analyze Flutter project
         run: flutter analyze
 
-      - name: Test
+      - name: Run tests
         run: flutter test
 
       - name: Build unsigned iOS app
