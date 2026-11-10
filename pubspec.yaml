@@ -1,0 +1,56 @@
+
+name: zippeddon
+description: ZIPPEDDON Archive Research and Compression Lab by Anonymous_beta.
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  archive: ^4.0.7
+  crypto: ^3.0.6
+  file_picker: ^8.1.7
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  share_plus: ^10.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.6
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/branding/
+    - assets/icons/
+    - assets/splash/
+    - assets/backgrounds/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+
+  image_path: assets/icons/app_icon.png
+
+  adaptive_icon_background: "#0C131B"
+  adaptive_icon_foreground: assets/icons/app_icon_foreground.png
+
+  remove_alpha_ios: true
+
+flutter_native_splash:
+  color: "#0C131B"
+  image: assets/splash/splash_logo.png
+
+  android_12:
+    color: "#0C131B"
+    image: assets/splash/splash_logo.png
