@@ -1,0 +1,38 @@
+
+name: zippeddon
+description: ZIPPEDDON archive research laboratory by Anonymous_beta.
+publish_to: none
+version: 2.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  archive: ^4.0.7
+  path_provider: ^2.1.5
+  share_plus: ^10.1.4
+  file_picker: ^8.1.7
+  shared_preferences: ^2.3.5
+  vibration: ^2.0.1
+  crypto: ^3.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/images/godzilla_icon.png
+  min_sdk_android: 21
