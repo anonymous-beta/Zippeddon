@@ -19,14 +19,13 @@ class BenchmarkResult {
     required this.integrityVerified,
   });
 
-  double get ratio =>
-      compressedSize == 0
-          ? 0
-          : originalSize / compressedSize;
+  double get ratio {
+    if (compressedSize == 0) return 0;
+    return originalSize / compressedSize;
+  }
 
   double get compressionSpeed {
-    final seconds =
-        compressionTime.inMicroseconds / 1000000;
+    final seconds = compressionTime.inMicroseconds / 1000000;
 
     if (seconds <= 0) return 0;
 
@@ -48,10 +47,9 @@ class BenchmarkEngine {
     }
 
     final source = Uint8List(bytes);
-
     final random = Random(seed);
 
-    for (int i = 0; i < source.length; i++) {
+    for (var i = 0; i < source.length; i++) {
       source[i] = random.nextInt(256);
     }
 
@@ -66,12 +64,10 @@ class BenchmarkEngine {
     );
 
     final compressionWatch = Stopwatch()..start();
-
     final encoded = ZipEncoder().encode(archive);
-
     compressionWatch.stop();
 
-    if (encoded == null || encoded.isEmpty) {
+    if (encoded.isEmpty) {
       throw StateError('Compression benchmark failed.');
     }
 
@@ -84,20 +80,18 @@ class BenchmarkEngine {
 
     decompressionWatch.stop();
 
-    final entry = decoded.findFile(
-      'benchmark/random-data.bin',
-    );
+    final entry = decoded.findFile('benchmark/random-data.bin');
 
     if (entry == null) {
       throw StateError('Benchmark entry missing.');
     }
 
-    final restored = entry.content as List<int>;
+    final restored = entry.content;
 
-    bool verified = restored.length == source.length;
+    var verified = restored.length == source.length;
 
     if (verified) {
-      for (int i = 0; i < source.length; i++) {
+      for (var i = 0; i < source.length; i++) {
         if (source[i] != restored[i]) {
           verified = false;
           break;
