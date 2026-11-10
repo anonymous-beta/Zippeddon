@@ -2,35 +2,28 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color background =
-      Color(0xFF0B0F12);
+  static const Color background = Color(0xFF0B0F12);
+  static const Color surface = Color(0xFF151C22);
+  static const Color surfaceLight = Color(0xFF202A31);
 
-  static const Color surface =
-      Color(0xFF151C22);
+  static const Color magma = Color(0xFFFF652F);
+  static const Color toxic = Color(0xFFB6F34A);
+  static const Color muted = Color(0xFF89949B);
 
-  static const Color surfaceLight =
-      Color(0xFF202A31);
-
-  static const Color magma =
-      Color(0xFFFF652F);
-
-  static const Color toxic =
-      Color(0xFFB6F34A);
-
-  static const Color muted =
-      Color(0xFF89949B);
+  // Compatibility alias for existing screen references.
+  static const Color accent = magma;
 
   static ThemeData dark() {
     return ThemeData(
       brightness: Brightness.dark,
       scaffoldBackgroundColor: background,
+      useMaterial3: true,
       colorScheme: const ColorScheme.dark(
         primary: magma,
         secondary: toxic,
         surface: surface,
         error: Colors.redAccent,
       ),
-      useMaterial3: true,
       appBarTheme: const AppBarTheme(
         backgroundColor: background,
         foregroundColor: Colors.white,
