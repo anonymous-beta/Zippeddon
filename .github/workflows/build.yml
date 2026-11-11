@@ -69,7 +69,7 @@ jobs:
           )
 
           if gradle_file is None:
-              print("ERROR: Android app Gradle file was not generated.")
+              print("ERROR: Android Gradle file not found.")
               sys.exit(1)
 
           content = gradle_file.read_text(encoding="utf-8")
@@ -86,15 +86,11 @@ jobs:
           )
 
           if replacements == 0:
-              print("ERROR: Could not find the compileSdk setting.")
-              print("Gradle file:", gradle_file)
+              print("ERROR: Could not update compileSdk.")
               print(content)
               sys.exit(1)
 
           gradle_file.write_text(updated, encoding="utf-8")
-
-          print("Updated:", gradle_file)
-          print("compileSdk is now 36.")
 
           if not re.search(
               r"(?m)^[ \t]*compileSdk(?:Version)?\b[ \t]*=?[ \t]*36\b",
@@ -102,15 +98,16 @@ jobs:
           ):
               print("ERROR: compileSdk 36 verification failed.")
               sys.exit(1)
+
+          print(f"SUCCESS: {gradle_file} uses compileSdk 36.")
           PY
 
-      - name: Verify generated Android and iOS directories
+      - name: Verify Android platform
         run: |
-          test -d android/app
-          test -d ios/Runner
-          test -d ios/Runner/Assets.xcassets/AppIcon.appiconset
+          test -f android/app/src/main/AndroidManifest.xml
+          test -f android/app/build.gradle.kts -o -f android/app/build.gradle
           grep -nE 'compileSdk(Version)?[[:space:]]*=?[[:space:]]*36' \
-            android/app/build.gradle* 
+            android/app/build.gradle*
 
       - name: Install dependencies
         run: flutter pub get
@@ -169,15 +166,19 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate iOS platform scaffolding
+      # Both platforms are generated because the icon and splash
+      # generators are configured for Android and iOS.
+      - name: Generate Android and iOS platform scaffolding
         run: |
           flutter create \
-            --platforms=ios \
+            --platforms=android,ios \
             --org com.anonymousbeta \
             .
 
-      - name: Verify iOS icon directory
+      - name: Verify generated platform directories
         run: |
+          test -f android/app/src/main/AndroidManifest.xml
+          test -d ios/Runner
           test -d ios/Runner/Assets.xcassets/AppIcon.appiconset
 
       - name: Install dependencies
@@ -197,6 +198,11 @@ jobs:
 
       - name: Build unsigned iOS app
         run: flutter build ios --release --no-codesign
+
+      - name: Verify iOS app
+        run: |
+          test -d build/ios/iphoneos/Runner.app
+          ls -ld build/ios/iphoneos/Runner.app
 
       - name: Upload iOS app
         uses: actions/upload-artifact@v4
