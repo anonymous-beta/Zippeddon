@@ -17,7 +17,7 @@ class InspectedEntry {
   });
 
   double get expansionRatio {
-    if (compressedSize == 0) return 0;
+    if (compressedSize <= 0) return 0;
     return uncompressedSize / compressedSize;
   }
 }
@@ -36,11 +36,12 @@ class ArchiveInspection {
   });
 
   double get expansionRatio {
-    if (archiveSize == 0) return 0;
+    if (archiveSize <= 0) return 0;
     return totalUncompressedSize / archiveSize;
   }
 
-  int get fileCount => entries.where((e) => !e.isDirectory).length;
+  int get fileCount =>
+      entries.where((entry) => !entry.isDirectory).length;
 }
 
 class ExtractionLimits {
@@ -73,19 +74,29 @@ class ArchiveInspector {
     }
 
     final bytes = file.readAsBytesSync();
-    final archive = ZipDecoder().decodeBytes(bytes, verify: true);
+
+    final archive = ZipDecoder().decodeBytes(
+      bytes,
+      verify: true,
+    );
 
     final entries = <InspectedEntry>[];
     var totalSize = 0;
 
     for (final item in archive.files) {
       final size = item.size;
+
       totalSize += size;
 
       entries.add(
         InspectedEntry(
           name: item.name,
-          compressedSize: item.compressedSize,
+
+          // ArchiveFile in archive ^4.0.7 does not expose
+          // compressedSize. Use zero rather than inventing
+          // a per-entry compressed-size measurement.
+          compressedSize: 0,
+
           uncompressedSize: size,
           isDirectory: item.isDirectory,
         ),
@@ -129,9 +140,10 @@ class ArchiveInspector {
         );
       }
 
-      if (entry.name.startsWith('/') ||
-          entry.name.contains('../') ||
-          entry.name.contains(r'..\')) {
+      final normalizedName = entry.name.replaceAll('\\', '/');
+
+      if (normalizedName.startsWith('/') ||
+          normalizedName.split('/').contains('..')) {
         throw ExtractionLimitException(
           'Unsafe archive path detected: ${entry.name}',
         );
@@ -145,10 +157,18 @@ class ArchiveInspector {
     ExtractionLimits limits = const ExtractionLimits(),
   }) async {
     final inspection = inspectFile(archiveFile);
-    validateExtraction(inspection, limits: limits);
+
+    validateExtraction(
+      inspection,
+      limits: limits,
+    );
 
     final bytes = await archiveFile.readAsBytes();
-    final archive = ZipDecoder().decodeBytes(bytes, verify: true);
+
+    final archive = ZipDecoder().decodeBytes(
+      bytes,
+      verify: true,
+    );
 
     final root = await destination.create(recursive: true);
     final rootPath = root.absolute.path;
@@ -156,7 +176,8 @@ class ArchiveInspector {
     for (final entry in archive.files) {
       final name = entry.name.replaceAll('\\', '/');
 
-      if (name.startsWith('/') || name.split('/').contains('..')) {
+      if (name.startsWith('/') ||
+          name.split('/').contains('..')) {
         throw ExtractionLimitException(
           'Unsafe path rejected: $name',
         );
@@ -177,20 +198,20 @@ class ArchiveInspector {
       }
 
       if (entry.isDirectory) {
-        await Directory(output.path).create(recursive: true);
+        await Directory(output.path).create(
+          recursive: true,
+        );
         continue;
       }
 
       await output.parent.create(recursive: true);
 
       final content = entry.content;
-      if (content is! List<int>) {
-        throw ExtractionLimitException(
-          'Unsupported entry data: $name',
-        );
-      }
 
-      await output.writeAsBytes(content, flush: true);
+      await output.writeAsBytes(
+        content,
+        flush: true,
+      );
     }
 
     return root;
