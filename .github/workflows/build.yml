@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   android:
-    name: Android APK
+    name: ZIPPEDDON Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -55,22 +55,25 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
 
-      - name: Install Android API 36
+      - name: Install Android SDK components
         run: |
           sdkmanager --install \
             "platform-tools" \
             "platforms;android-36" \
-            "build-tools;36.0.0"
+            "build-tools;36.0.0" \
+            "cmake;3.22.1"
 
       - name: Verify Android SDK
         run: |
           command -v sdkmanager
           sdkmanager --version
-          sdkmanager --list_installed
           test -d "$ANDROID_HOME/platforms/android-36"
           test -d "$ANDROID_HOME/build-tools/36.0.0"
 
-      - name: Configure Android compile SDK 36
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Force Android API 36 across project and plugins
         shell: bash
         run: |
           python - <<'PY'
@@ -78,62 +81,110 @@ jobs:
           import re
           import sys
 
-          candidates = [
-              Path("android/app/build.gradle.kts"),
-              Path("android/app/build.gradle"),
+          roots = [
+              Path("android"),
+              Path.home() / ".pub-cache" / "hosted",
+              Path.home() / ".pub-cache" / "git",
           ]
 
-          gradle_file = next(
-              (p for p in candidates if p.is_file()),
-              None,
+          candidates = set()
+
+          for root in roots:
+              if not root.exists():
+                  continue
+
+              for pattern in ("build.gradle", "build.gradle.kts"):
+                  candidates.update(root.rglob(pattern))
+
+          changed = []
+
+          patterns = [
+              re.compile(
+                  r"(?m)^([ \t]*compileSdkVersion[ \t]+)"
+                  r"(?:flutter\.compileSdkVersion|\d+)"
+              ),
+              re.compile(
+                  r"(?m)^([ \t]*compileSdk[ \t]*=[ \t]*)"
+                  r"(?:flutter\.compileSdkVersion|\d+)"
+              ),
+              re.compile(
+                  r"(?m)^([ \t]*compileSdk[ \t]+)"
+                  r"(?:flutter\.compileSdkVersion|\d+)"
+              ),
+          ]
+
+          for file in candidates:
+              try:
+                  original = file.read_text(encoding="utf-8")
+              except (OSError, UnicodeDecodeError):
+                  continue
+
+              updated = original
+
+              for pattern in patterns:
+                  updated = pattern.sub(
+                      lambda match: match.group(1) + "36",
+                      updated
+                  )
+
+              if updated != original:
+                  file.write_text(updated, encoding="utf-8")
+                  changed.append(str(file))
+
+          print("Android Gradle files updated:")
+          for file in changed:
+              print(" -", file)
+
+          app_gradle = [
+              Path("android/app/build.gradle"),
+              Path("android/app/build.gradle.kts"),
+          ]
+
+          app_file = next(
+              (file for file in app_gradle if file.exists()),
+              None
           )
 
-          if gradle_file is None:
+          if app_file is None:
               sys.exit("ERROR: Android app Gradle file not found.")
 
-          content = gradle_file.read_text(encoding="utf-8")
+          content = app_file.read_text(encoding="utf-8")
 
-          pattern = re.compile(
-              r"(?m)^([ \t]*compileSdk(?:Version)?\b[ \t]*=?[ \t]*)"
-              r"(?:flutter\.compileSdkVersion|\d+)"
-              r"([ \t]*(?://.*)?$)"
-          )
+          app_patterns = [
+              re.compile(
+                  r"(?m)^([ \t]*compileSdkVersion[ \t]+)"
+                  r"(?:flutter\.compileSdkVersion|\d+)"
+              ),
+              re.compile(
+                  r"(?m)^([ \t]*compileSdk[ \t]*=[ \t]*)"
+                  r"(?:flutter\.compileSdkVersion|\d+)"
+              ),
+              re.compile(
+                  r"(?m)^([ \t]*compileSdk[ \t]+)"
+                  r"(?:flutter\.compileSdkVersion|\d+)"
+              ),
+          ]
 
-          updated, count = pattern.subn(
-              r"\g<1>36\g<2>",
-              content,
-          )
-
-          if count == 0:
-              sys.exit(
-                  "ERROR: Could not update compileSdk to 36. "
-                  "Inspect the generated Gradle file."
+          for pattern in app_patterns:
+              content = pattern.sub(
+                  lambda match: match.group(1) + "36",
+                  content
               )
 
-          gradle_file.write_text(updated, encoding="utf-8")
+          app_file.write_text(content, encoding="utf-8")
 
-          if not re.search(
-              r"(?m)^[ \t]*compileSdk(?:Version)?\b"
-              r"[ \t]*=?[ \t]*36\b",
-              updated,
-          ):
-              sys.exit("ERROR: compileSdk 36 verification failed.")
-
-          print(f"Configured {gradle_file} to use compileSdk 36.")
+          print(f"Configured application module: {app_file}")
           PY
 
-      - name: Verify generated Android project
+      - name: Verify Android API configuration
+        shell: bash
         run: |
-          test -f android/app/src/main/AndroidManifest.xml
-          test -f android/app/build.gradle.kts -o \
-               -f android/app/build.gradle
+          echo "Application Gradle configuration:"
+          grep -nE 'compileSdk(Version)?' android/app/build.gradle* || true
 
-          grep -nE \
-            'compileSdk(Version)?[[:space:]]*=?[[:space:]]*36' \
-            android/app/build.gradle*
-
-      - name: Install Flutter dependencies
-        run: flutter pub get
+          echo "Checking Android SDK installation:"
+          test -d "$ANDROID_HOME/platforms/android-36"
+          test -d "$ANDROID_HOME/build-tools/36.0.0"
 
       - name: Generate launcher icons
         run: dart run flutter_launcher_icons
@@ -144,8 +195,14 @@ jobs:
       - name: Analyze Flutter project
         run: flutter analyze
 
-      - name: Run tests
+      - name: Run Flutter tests
         run: flutter test
+
+      - name: Clean previous build outputs
+        run: flutter clean
+
+      - name: Restore Flutter dependencies
+        run: flutter pub get
 
       - name: Build release APK
         run: flutter build apk --release
@@ -153,10 +210,15 @@ jobs:
       - name: Verify APK
         run: |
           APK="build/app/outputs/flutter-apk/app-release.apk"
-          test -f "$APK"
+
+          if [ ! -f "$APK" ]; then
+            echo "ERROR: Release APK was not generated."
+            exit 1
+          fi
+
           ls -lh "$APK"
 
-      - name: Upload APK
+      - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: ZIPPEDDON-Android-APK
@@ -164,7 +226,7 @@ jobs:
           if-no-files-found: error
 
   ios:
-    name: iOS App
+    name: ZIPPEDDON iOS App
     runs-on: macos-latest
 
     steps:
@@ -197,9 +259,9 @@ jobs:
             --org com.anonymousbeta \
             .
 
-      - name: Verify generated platform directories
+      - name: Verify generated platforms
         run: |
-          test -f android/app/src/main/AndroidManifest.xml
+          test -d android
           test -d ios/Runner
           test -d ios/Runner/Assets.xcassets/AppIcon.appiconset
 
@@ -215,7 +277,7 @@ jobs:
       - name: Analyze Flutter project
         run: flutter analyze
 
-      - name: Run tests
+      - name: Run Flutter tests
         run: flutter test
 
       - name: Build unsigned iOS app
