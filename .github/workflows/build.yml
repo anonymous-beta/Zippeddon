@@ -1,4 +1,3 @@
-
 name: ZIPPEDDON Build
 
 on:
@@ -46,11 +45,72 @@ jobs:
             --org com.anonymousbeta \
             .
 
-      - name: Verify generated platform directories
+      - name: Install Android API 36
+        run: |
+          sdkmanager --install "platforms;android-36" "build-tools;36.0.0"
+          yes | sdkmanager --licenses
+
+      - name: Configure Android compile SDK 36
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          candidates = [
+              Path("android/app/build.gradle.kts"),
+              Path("android/app/build.gradle"),
+          ]
+
+          gradle_file = next(
+              (path for path in candidates if path.is_file()),
+              None
+          )
+
+          if gradle_file is None:
+              print("ERROR: Android app Gradle file was not generated.")
+              sys.exit(1)
+
+          content = gradle_file.read_text(encoding="utf-8")
+
+          pattern = re.compile(
+              r"(?m)^([ \t]*compileSdk(?:Version)?\b[ \t]*=?[ \t]*)"
+              r"(?:flutter\.compileSdkVersion|\d+)"
+              r"([ \t]*(?://.*)?$)"
+          )
+
+          updated, replacements = pattern.subn(
+              r"\g<1>36\g<2>",
+              content
+          )
+
+          if replacements == 0:
+              print("ERROR: Could not find the compileSdk setting.")
+              print("Gradle file:", gradle_file)
+              print(content)
+              sys.exit(1)
+
+          gradle_file.write_text(updated, encoding="utf-8")
+
+          print("Updated:", gradle_file)
+          print("compileSdk is now 36.")
+
+          if not re.search(
+              r"(?m)^[ \t]*compileSdk(?:Version)?\b[ \t]*=?[ \t]*36\b",
+              updated
+          ):
+              print("ERROR: compileSdk 36 verification failed.")
+              sys.exit(1)
+          PY
+
+      - name: Verify generated Android and iOS directories
         run: |
           test -d android/app
           test -d ios/Runner
           test -d ios/Runner/Assets.xcassets/AppIcon.appiconset
+          grep -nE 'compileSdk(Version)?[[:space:]]*=?[[:space:]]*36' \
+            android/app/build.gradle* 
 
       - name: Install dependencies
         run: flutter pub get
