@@ -45,10 +45,24 @@ jobs:
             --org com.anonymousbeta \
             .
 
+      # Install Android command-line tools and configure sdkmanager.
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Install Android API 36
         run: |
-          sdkmanager --install "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager --install \
+            "platform-tools" \
+            "platforms;android-36" \
+            "build-tools;36.0.0"
+
           yes | sdkmanager --licenses
+
+      - name: Verify Android SDK installation
+        run: |
+          sdkmanager --list_installed
+          test -d "$ANDROID_HOME/platforms/android-36"
+          test -d "$ANDROID_HOME/build-tools/36.0.0"
 
       - name: Configure Android compile SDK 36
         shell: bash
@@ -109,7 +123,7 @@ jobs:
           grep -nE 'compileSdk(Version)?[[:space:]]*=?[[:space:]]*36' \
             android/app/build.gradle*
 
-      - name: Install dependencies
+      - name: Install Flutter dependencies
         run: flutter pub get
 
       - name: Generate launcher icons
@@ -166,7 +180,7 @@ jobs:
           channel: stable
           cache: true
 
-      # Both platforms are generated because the icon and splash
+      # Generate both platforms because the icon and splash
       # generators are configured for Android and iOS.
       - name: Generate Android and iOS platform scaffolding
         run: |
@@ -181,7 +195,7 @@ jobs:
           test -d ios/Runner
           test -d ios/Runner/Assets.xcassets/AppIcon.appiconset
 
-      - name: Install dependencies
+      - name: Install Flutter dependencies
         run: flutter pub get
 
       - name: Generate launcher icons
